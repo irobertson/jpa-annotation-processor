@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Java 6 Annotation Processor Plug-in
+Bundle-SymbolicName: com.overstock.sample.processor.jpa
+Bundle-Version: 1.0.0
+Bundle-Activator: com.overstock.sample.processor.Activator
+Bundle-Vendor: Eclipse.org
+Require-Bundle: org.eclipse.core.runtime,
+ org.eclipse.jdt.apt.core
+Bundle-ActivationPolicy: lazy
+Export-Package: com.overstock.sample.processor;x-internal:=true
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
