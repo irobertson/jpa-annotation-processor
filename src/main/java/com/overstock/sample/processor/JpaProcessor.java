@@ -198,11 +198,10 @@ public class JpaProcessor extends AbstractProcessor {
   private AnnotatedElement findParentReferenceInChildType(TypeMirror parentType, Element childType) {
     for (Element element: childType.getEnclosedElements()) {
       if (element.getKind() == ElementKind.FIELD || element.getKind() == ElementKind.METHOD) {
-        for (AnnotationMirror annotationMirror: element.getAnnotationMirrors()) {
-          if (typeUtils().isSameType(manyToOneType.type, annotationMirror.getAnnotationType())
-              && typeUtils().isSameType(parentType, getPropertyType(element))) {
-            return new AnnotatedElement(element, annotationMirror);
-          }
+        AnnotationMirror annotationMirror = getAnnotation(element, manyToOneType.type);
+        if (annotationMirror != null
+            && typeUtils().isSameType(parentType, getPropertyType(element))) {
+          return new AnnotatedElement(element, annotationMirror);
         }
       }
     }
