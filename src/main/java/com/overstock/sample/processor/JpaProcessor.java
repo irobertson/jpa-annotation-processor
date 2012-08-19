@@ -32,13 +32,6 @@ import javax.tools.Diagnostic.Kind;
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class JpaProcessor extends AbstractProcessor {
 
-  private static final class StringValueVisitor extends SimpleAnnotationValueVisitor6<String, Void> {
-    @Override
-    public String visitString(String s, Void p) {
-      return s;
-    }
-  }
-
   // various types we'll want to refer to, initialized in init method
   private ElementTypePair entityType;
   private ElementTypePair oneToManyType;
@@ -139,7 +132,7 @@ public class JpaProcessor extends AbstractProcessor {
           oneToManyAnnotation);
       }
       else {
-        String mappedByContent = mappedBy.accept(new StringValueVisitor(), null);
+        String mappedByContent = (String) mappedBy.getValue();
         if (! mappedByContent.equals(getPropertyName(manyToOneAnnotated.element))) {
           processingEnv.getMessager().printMessage(
             Kind.ERROR,
