@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.tools.Diagnostic.Kind;
 
@@ -122,7 +123,8 @@ public class JpaProcessorTest {
       Kind.ERROR,
       "mappedBy attribute should be parent",
       "getChildren()",
-      "@javax.persistence.OneToMany(mappedBy=\"mismatch\")");
+      "@javax.persistence.OneToMany(mappedBy=\"mismatch\")",
+      "\"mismatch\"");
     Mockito.verifyNoMoreInteractions(mockMessager);
   }
 
@@ -153,6 +155,16 @@ public class JpaProcessorTest {
       Matchers.eq(message),
       Matchers.argThat(ToStringMatcher.hasToString(elementName, Element.class)),
       Matchers.argThat(ToStringMatcher.hasToString(annotationName, AnnotationMirror.class)));
+  }
+
+  private void verifyPrintMessage(
+    Kind kind, String message, String elementName, String annotationName, String annotationElementName) {
+    Mockito.verify(mockMessager).printMessage(
+      Matchers.eq(kind),
+      Matchers.eq(message),
+      Matchers.argThat(ToStringMatcher.hasToString(elementName, Element.class)),
+      Matchers.argThat(ToStringMatcher.hasToString(annotationName, AnnotationMirror.class)),
+      Matchers.argThat(ToStringMatcher.hasToString(annotationElementName, AnnotationValue.class)));
   }
 
 }
