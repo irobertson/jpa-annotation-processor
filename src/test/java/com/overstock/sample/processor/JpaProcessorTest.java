@@ -17,16 +17,17 @@ public class JpaProcessorTest {
 
   private Messager mockMessager;
   private ProcessorWrapper processor;
+  private Compiler compiler;
 
   @Before
-  public void setup() {
+  public void setup() throws Exception{
     mockMessager = Mockito.mock(Messager.class);
     processor = new ProcessorWrapper(new JpaProcessor(), mockMessager);
+    compiler = new Compiler();
   }
 
   @Test
   public void testEntityWithNoArgConstructor() throws Exception {
-    Compiler compiler = new Compiler(Compiler.Options());
     SourceFile[] sourceFiles = { new SourceFile(
       "SimpleAnnotated.java",
       "@javax.persistence.Entity",
@@ -38,7 +39,6 @@ public class JpaProcessorTest {
 
   @Test
   public void testEntityWithoutNoArgConstructor() throws Exception {
-    Compiler compiler = new Compiler(Compiler.Options());
     SourceFile[] sourceFiles = {
         new SourceFile(
           "SimpleAnnotated.java",
@@ -55,7 +55,6 @@ public class JpaProcessorTest {
 
   @Test
   public void testOneToManyMissingManyToOne() throws Exception {
-    Compiler compiler = new Compiler(Compiler.Options());
     SourceFile[] sourceFiles = {
         new SourceFile(
           "Parent.java",
@@ -77,7 +76,6 @@ public class JpaProcessorTest {
 
   @Test
   public void testOneToManyMissingMappedBy() throws Exception {
-    Compiler compiler = new Compiler(Compiler.Options());
     SourceFile[] sourceFiles = {
         new SourceFile(
           "Parent.java",
@@ -103,7 +101,6 @@ public class JpaProcessorTest {
 
   @Test
   public void testOneToManyWrongMappedBy() throws Exception {
-    Compiler compiler = new Compiler(Compiler.Options());
     SourceFile[] sourceFiles = {
         new SourceFile(
           "Parent.java",
@@ -130,7 +127,6 @@ public class JpaProcessorTest {
 
   @Test
   public void testOneToManyCorrect() throws Exception {
-    Compiler compiler = new Compiler(Compiler.Options());
     SourceFile[] sourceFiles = {
         new SourceFile(
           "Parent.java",

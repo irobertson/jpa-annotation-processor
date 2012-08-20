@@ -24,40 +24,22 @@ import com.google.common.collect.Lists;
 
 public class Compiler {
 
-  public static class Options {
-    private List<String> classPathEntries = Lists.newArrayList();
-
-    private Options() {
-      classPathEntries.add(classPathFor(Compiler.class));
-      classPathEntries.add(classPathFor(JpaProcessor.class));
-      classPathEntries.add(classPathFor(Entity.class));
-    }
-
-
-    public Options withExtraClassPathEntry(Class<?> extraClass) {
-      classPathEntries.add(classPathFor(extraClass));
-      return this;
-    }
-
-    public Options withExtraClassPathEntry(File dir) {
-      classPathEntries.add(dir.getAbsolutePath());
-      return this;
-    }
-  }
-
-  public static Options Options() {
-    return new Options();
+  private static List<String> classPathEntries = Lists.newArrayList();
+  static {
+    classPathEntries.add(classPathFor(Compiler.class));
+    classPathEntries.add(classPathFor(JpaProcessor.class));
+    classPathEntries.add(classPathFor(Entity.class));
   }
 
   private final File sourceDir, outputDir;
   private final List<String> options;
 
-  public Compiler(Options options) throws IOException {
+  public Compiler() throws IOException {
     sourceDir = createTempDir("sourceDir");
     outputDir = createTempDir("outputDir");
 
     Builder<String> builder = ImmutableList.builder();
-    builder.add("-classpath").add(buildClassPath(options, outputDir));
+    builder.add("-classpath").add(buildClassPath(outputDir));
     builder.add("-d").add(outputDir.getAbsolutePath());
     this.options = builder.build();
   }
@@ -98,8 +80,8 @@ public class Compiler {
     return success;
   }
 
-  private static String buildClassPath(Options options, File outputDir) {
-    ArrayList<String> classPathElements = Lists.newArrayList(options.classPathEntries);
+  private static String buildClassPath(File outputDir) {
+    ArrayList<String> classPathElements = Lists.newArrayList(classPathEntries);
     classPathElements.add(outputDir.getAbsolutePath());
     return Joiner.on(":").join(classPathElements);
   }
