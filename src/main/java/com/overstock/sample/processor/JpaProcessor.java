@@ -2,6 +2,7 @@ package com.overstock.sample.processor;
 
 import java.beans.Introspector;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -35,7 +36,7 @@ public class JpaProcessor extends AbstractProcessor {
   // various types we'll want to refer to, initialized in init method
   private ElementTypePair entityType;
   private ElementTypePair oneToManyType;
-  private ElementTypePair collectionsType;
+  private ElementTypePair collectionType;
   private ElementTypePair manyToOneType;
 
   // convenience delegations
@@ -49,7 +50,7 @@ public class JpaProcessor extends AbstractProcessor {
     super.init(processingEnv);
     entityType = getType("javax.persistence.Entity");
     oneToManyType = getType("javax.persistence.OneToMany");
-    collectionsType = getType("java.util.Collection");
+    collectionType = getType("java.util.Collection");
     manyToOneType = getType("javax.persistence.ManyToOne");
   }
 
@@ -110,12 +111,14 @@ public class JpaProcessor extends AbstractProcessor {
    * @param childProperty the field or method in the parent class, annotated with &#64;{@link OneToMany}.
    */
   private void checkForBiDirectionalMapping(Element childProperty) {
-    AnnotationMirror oneToManyAnnotation = getAnnotation(childProperty, oneToManyType.type);
-    Element childElement = getCollectionType(getPropertyType(childProperty)).asElement();
+    TypeMirror propertyType = getPropertyType(childProperty);
+    Element childElement = getCollectionType(propertyType).asElement();
+    TypeElement enclosingElement = (TypeElement) childProperty.getEnclosingElement();
     DeclaredType parentType =
-        typeUtils().getDeclaredType((TypeElement) childProperty.getEnclosingElement());
-    AnnotatedElement manyToOneAnnotated = findParentReferenceInChildType(parentType, childElement);
-    if (manyToOneAnnotated == null) {
+        typeUtils().getDeclaredType(enclosingElement);
+    Element parentPropertyInChild = findParentReferenceInChildType(parentType, childElement);
+    AnnotationMirror oneToManyAnnotation = getAnnotation(childProperty, oneToManyType.type);
+    if (parentPropertyInChild == null) {
       processingEnv.getMessager().printMessage(
         Kind.ERROR,
         "No matching @ManyToOne annotation on " + childElement.getSimpleName(),
@@ -133,10 +136,10 @@ public class JpaProcessor extends AbstractProcessor {
       }
       else {
         String mappedByContent = (String) mappedBy.getValue();
-        if (! mappedByContent.equals(getPropertyName(manyToOneAnnotated.element))) {
+        if (! mappedByContent.equals(getPropertyName(parentPropertyInChild))) {
           processingEnv.getMessager().printMessage(
             Kind.ERROR,
-            "mappedBy attribute should be " + getPropertyName(manyToOneAnnotated.element),
+            "mappedBy attribute should be " + getPropertyName(parentPropertyInChild),
             childProperty,
             oneToManyAnnotation,
             mappedBy);
@@ -194,13 +197,13 @@ public class JpaProcessor extends AbstractProcessor {
    * @param childType the class expected to contain the annotated property
    * @return The property element and it's annotation
    */
-  private AnnotatedElement findParentReferenceInChildType(TypeMirror parentType, Element childType) {
+  private Element findParentReferenceInChildType(TypeMirror parentType, Element childType) {
     for (Element element: childType.getEnclosedElements()) {
       if (element.getKind() == ElementKind.FIELD || element.getKind() == ElementKind.METHOD) {
         AnnotationMirror annotationMirror = getAnnotation(element, manyToOneType.type);
         if (annotationMirror != null
             && typeUtils().isSameType(parentType, getPropertyType(element))) {
-          return new AnnotatedElement(element, annotationMirror);
+          return element;
         }
       }
     }
@@ -213,8 +216,9 @@ public class JpaProcessor extends AbstractProcessor {
    * @return the type of elements in the collection
    */
   private DeclaredType getCollectionType(TypeMirror type) {
-    if (type != null && typeUtils().isAssignable(type, collectionsType.type)) {
-      return (DeclaredType) ((DeclaredType) type).getTypeArguments().get(0);
+    if (type != null && typeUtils().isAssignable(type, collectionType.type)) {
+      List<? extends TypeMirror> typeArguments = ((DeclaredType) type).getTypeArguments();
+      return (DeclaredType) typeArguments.get(0);
     }
     return null;
   }
