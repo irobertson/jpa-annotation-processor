@@ -96,7 +96,6 @@ public class Compiler {
    return file;
   }
 
-  // Borrowed from JavaFrameworkTestUtils; not imported to avoid a circular dependency
   private static File createTempDir(String prefix) throws IOException {
     File file = File.createTempFile(prefix, null);
     if (!file.delete()) {
