@@ -4,7 +4,6 @@ import java.beans.Introspector;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -21,7 +20,6 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Types;
@@ -56,7 +54,7 @@ public class JpaProcessor extends AbstractProcessor {
     collectionType = getType("java.util.Collection");
     manyToOneType = getType("javax.persistence.ManyToOne");
 
-    mappedByAttribute = findMethod(oneToManyType.element, "mappedBy");
+    mappedByAttribute = getMethod(oneToManyType.element, "mappedBy");
   }
 
   @Override
@@ -142,10 +140,11 @@ public class JpaProcessor extends AbstractProcessor {
       }
       else {
         String mappedByContent = (String) mappedBy.getValue();
-        if (! mappedByContent.equals(getPropertyName(parentPropertyInChild))) {
+        String expected = getPropertyName(parentPropertyInChild);
+        if (! mappedByContent.equals(expected)) {
           processingEnv.getMessager().printMessage(
             Kind.ERROR,
-            "mappedBy attribute should be " + getPropertyName(parentPropertyInChild),
+            "mappedBy attribute should be " + expected,
             childProperty,
             oneToManyAnnotation,
             mappedBy);
@@ -268,12 +267,12 @@ public class JpaProcessor extends AbstractProcessor {
   }
 
   /**
-   * Find the method in {@code element} named {@code methodName}
+   * Get the method in {@code element} named {@code methodName}
    * @param element an element representing an entity with a method name of {@code methodName}
    * @param methodName the method name
    * @return the method
    */
-  private ExecutableElement findMethod(Element element, String methodName) {
+  private ExecutableElement getMethod(Element element, String methodName) {
     for (ExecutableElement executable: ElementFilter.methodsIn(element.getEnclosedElements())) {
       if (executable.getSimpleName().toString().equals(methodName)) {
         return executable;
