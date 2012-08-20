@@ -112,12 +112,13 @@ public class JpaProcessor extends AbstractProcessor {
    */
   private void checkForBiDirectionalMapping(Element childProperty) {
     TypeMirror propertyType = getPropertyType(childProperty);
-    Element childElement = getCollectionType(propertyType).asElement();
+    DeclaredType childType = getCollectionType(propertyType);
+    Element childElement = childType.asElement();
     TypeElement enclosingElement = (TypeElement) childProperty.getEnclosingElement();
     DeclaredType parentType =
         typeUtils().getDeclaredType(enclosingElement);
-    Element parentPropertyInChild = findParentReferenceInChildType(parentType, childElement);
     AnnotationMirror oneToManyAnnotation = getAnnotation(childProperty, oneToManyType.type);
+    Element parentPropertyInChild = findParentReferenceInChildType(parentType, childElement);
     if (parentPropertyInChild == null) {
       processingEnv.getMessager().printMessage(
         Kind.ERROR,
@@ -200,8 +201,7 @@ public class JpaProcessor extends AbstractProcessor {
   private Element findParentReferenceInChildType(TypeMirror parentType, Element childType) {
     for (Element element: childType.getEnclosedElements()) {
       if (element.getKind() == ElementKind.FIELD || element.getKind() == ElementKind.METHOD) {
-        AnnotationMirror annotationMirror = getAnnotation(element, manyToOneType.type);
-        if (annotationMirror != null
+        if (getAnnotation(element, manyToOneType.type) != null
             && typeUtils().isSameType(parentType, getPropertyType(element))) {
           return element;
         }
