@@ -3,6 +3,7 @@ package com.overstock.sample.processor;
 import java.beans.Introspector;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -39,6 +40,8 @@ public class JpaProcessor extends AbstractProcessor {
   private ElementTypePair collectionType;
   private ElementTypePair manyToOneType;
 
+  private ExecutableElement mappedByAttribute;
+
   // convenience delegations
   private Types typeUtils() {
     return processingEnv.getTypeUtils();
@@ -52,6 +55,8 @@ public class JpaProcessor extends AbstractProcessor {
     oneToManyType = getType("javax.persistence.OneToMany");
     collectionType = getType("java.util.Collection");
     manyToOneType = getType("javax.persistence.ManyToOne");
+
+    mappedByAttribute = findMethod(oneToManyType.element, "mappedBy");
   }
 
   @Override
@@ -182,13 +187,9 @@ public class JpaProcessor extends AbstractProcessor {
    * @return the value of {@code oneToManyAnnotation}'s {@code mappedBy} attribute
    */
   private AnnotationValue getMappedByValue(AnnotationMirror oneToManyAnnotation) {
-    for(Entry<? extends ExecutableElement, ? extends AnnotationValue> entry:
-      oneToManyAnnotation.getElementValues().entrySet()) {
-      if ("mappedBy".equals(entry.getKey().getSimpleName().toString())) {
-        return entry.getValue();
-      }
-    }
-    return null;
+    Map<? extends ExecutableElement, ? extends AnnotationValue> elementValues =
+        oneToManyAnnotation.getElementValues();
+    return elementValues.get(mappedByAttribute);
   }
 
   /**
@@ -265,4 +266,20 @@ public class JpaProcessor extends AbstractProcessor {
     DeclaredType declaredType = typeUtils().getDeclaredType(typeElement);
     return new ElementTypePair(typeElement, declaredType);
   }
+
+  /**
+   * Find the method in {@code element} named {@code methodName}
+   * @param element an element representing an entity with a method name of {@code methodName}
+   * @param methodName the method name
+   * @return the method
+   */
+  private ExecutableElement findMethod(Element element, String methodName) {
+    for (ExecutableElement executable: ElementFilter.methodsIn(element.getEnclosedElements())) {
+      if (executable.getSimpleName().toString().equals(methodName)) {
+        return executable;
+      }
+    }
+    throw new IllegalArgumentException("no element named " + methodName + " + in element");
+  }
+
 }
