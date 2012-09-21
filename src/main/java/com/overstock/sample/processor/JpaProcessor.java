@@ -83,7 +83,8 @@ public class JpaProcessor extends AbstractProcessor {
    */
   private void checkForNoArgumentConstructor(TypeElement typeElement) {
     for (ExecutableElement constructor : ElementFilter.constructorsIn(typeElement.getEnclosedElements())) {
-      if (constructor.getParameters().size() == 0) {
+      List<? extends VariableElement> parameters = constructor.getParameters();
+      if (parameters.isEmpty()) {
         return;
       }
     }
