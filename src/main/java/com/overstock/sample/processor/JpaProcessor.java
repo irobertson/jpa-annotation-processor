@@ -119,8 +119,7 @@ public class JpaProcessor extends AbstractProcessor {
     DeclaredType childType = getCollectionType(propertyType);
     Element childElement = childType.asElement();
     TypeElement enclosingElement = (TypeElement) childProperty.getEnclosingElement();
-    DeclaredType parentType =
-        typeUtils().getDeclaredType(enclosingElement);
+    DeclaredType parentType = typeUtils().getDeclaredType(enclosingElement);
     AnnotationMirror oneToManyAnnotation = getAnnotation(childProperty, oneToManyType.type);
     Element parentPropertyInChild = findParentReferenceInChildType(parentType, childElement);
     if (parentPropertyInChild == null) {
@@ -218,6 +217,9 @@ public class JpaProcessor extends AbstractProcessor {
    */
   private DeclaredType getCollectionType(TypeMirror type) {
     if (type != null && typeUtils().isAssignable(type, collectionType.type)) {
+      // This is a bit of a hack; to work properly, we should walk up the inheritance hierarchy, tracking type
+      // parameters as we go. For example, if the type in question is StringList, which implements List<String>,
+      // then this code would not work.
       List<? extends TypeMirror> typeArguments = ((DeclaredType) type).getTypeArguments();
       return (DeclaredType) typeArguments.get(0);
     }
