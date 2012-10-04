@@ -20,6 +20,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Types;
@@ -28,6 +29,25 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.tools.Diagnostic.Kind;
 
+/**
+ * An example annotation processor, used in the talk "Writing Annotation Processors to Aid Your Development Process".
+ *
+ * This processor does two things:
+ * <ul>
+ *   <li>Verifies that &#64;{@link Entity}-annotated classes have a no-argument constructor.</li>
+ *   <li>
+ *     For properties annotated with &#64;{@link OneToMany}, it verifies that:
+ *     <ul>
+ *       <li>The child entity must have a corresponding property annotated with &#64;{@link ManyToOne}</li>
+ *       <li>
+ *         The {code}&#64;OneToMany{code} annotation must have {@code mappedBy} pointing to the property on the child
+ *       </li>
+ *     </ul>
+ *   </li>
+ * </ul>
+ * @author ian
+ *
+ */
 @SupportedAnnotationTypes({"javax.persistence.Entity", "javax.persistence.OneToMany"})
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class JpaProcessor extends AbstractProcessor {
@@ -36,7 +56,6 @@ public class JpaProcessor extends AbstractProcessor {
   private ElementTypePair entityType;
   private ElementTypePair oneToManyType;
   private ElementTypePair collectionType;
-  private ElementTypePair manyToOneType;
 
   private ExecutableElement mappedByAttribute;
 
@@ -52,7 +71,6 @@ public class JpaProcessor extends AbstractProcessor {
     entityType = getType("javax.persistence.Entity");
     oneToManyType = getType("javax.persistence.OneToMany");
     collectionType = getType("java.util.Collection");
-    manyToOneType = getType("javax.persistence.ManyToOne");
 
     mappedByAttribute = getMethod(oneToManyType.element, "mappedBy");
   }
@@ -139,7 +157,8 @@ public class JpaProcessor extends AbstractProcessor {
           oneToManyAnnotation);
       }
       else {
-        String mappedByContent = (String) mappedBy.getValue();
+        String mappedByContent = (String) mappedBy.getValue(); //or:
+                                                               //childProperty.getAnnotation(OneToMany.class).mappedBy()
         String expected = getPropertyName(parentPropertyInChild);
         if (! mappedByContent.equals(expected)) {
           processingEnv.getMessager().printMessage(
@@ -182,6 +201,13 @@ public class JpaProcessor extends AbstractProcessor {
 
   /**
    * Get the value of the {@link OneToMany#mappedBy() mappedBy} element of a &#64;{@link OneToMany} annotation.
+   * Note that an alternative approach here would be to go back to the annotated element and call
+   * {@code getAnnotation(OneToMany.class).mappedBy()}. However, in some cases, it is necessary to reflect on the
+   * annotation mirror. For example, annotation values of type Class may refer to classes currently under compilation,
+   * and hence not in the class path. Attempting to invoke those annotation methods could result in a
+   * {@link MirroredTypeException} being thrown. In more extreme cases, you may be reflecting over an annotation
+   * which is not available at the time your annotation processor is being built.
+   *
    * @param oneToManyAnnotation an annotation of type &#64;{@link OneToMany}.
    * @return the value of {@code oneToManyAnnotation}'s {@code mappedBy} attribute
    */
@@ -201,7 +227,7 @@ public class JpaProcessor extends AbstractProcessor {
   private Element findParentReferenceInChildType(TypeMirror parentType, Element childType) {
     for (Element element: childType.getEnclosedElements()) {
       if (element.getKind() == ElementKind.FIELD || element.getKind() == ElementKind.METHOD) {
-        if (getAnnotation(element, manyToOneType.type) != null
+        if (element.getAnnotation(ManyToOne.class) != null
             && typeUtils().isSameType(parentType, getPropertyType(element))) {
           return element;
         }
