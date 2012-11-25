@@ -83,7 +83,7 @@ public class Compiler {
   private static String buildClassPath(File outputDir) {
     ArrayList<String> classPathElements = Lists.newArrayList(classPathEntries);
     classPathElements.add(outputDir.getAbsolutePath());
-    return Joiner.on(":").join(classPathElements);
+    return Joiner.on(System.getProperty("path.separator")).join(classPathElements);
   }
 
   private static String classPathFor(Class<?> clazz) {
