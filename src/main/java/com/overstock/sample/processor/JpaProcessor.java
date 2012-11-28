@@ -56,6 +56,7 @@ public class JpaProcessor extends AbstractProcessor {
   private ElementTypePair entityType;
   private ElementTypePair oneToManyType;
   private ElementTypePair collectionType;
+  private ElementTypePair manyToOneType;
 
   private ExecutableElement mappedByAttribute;
 
@@ -71,6 +72,7 @@ public class JpaProcessor extends AbstractProcessor {
     entityType = getType("javax.persistence.Entity");
     oneToManyType = getType("javax.persistence.OneToMany");
     collectionType = getType("java.util.Collection");
+    manyToOneType = getType("javax.persistence.ManyToOne");
 
     mappedByAttribute = getMethod(oneToManyType.element, "mappedBy");
   }
@@ -227,7 +229,7 @@ public class JpaProcessor extends AbstractProcessor {
   private Element findParentReferenceInChildType(TypeMirror parentType, Element childType) {
     for (Element element: childType.getEnclosedElements()) {
       if (element.getKind() == ElementKind.FIELD || element.getKind() == ElementKind.METHOD) {
-        if (element.getAnnotation(ManyToOne.class) != null
+        if (getAnnotation(element, manyToOneType.type) != null
             && typeUtils().isSameType(parentType, getPropertyType(element))) {
           return element;
         }
