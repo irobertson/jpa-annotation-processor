@@ -87,7 +87,15 @@ public class Compiler {
   }
 
   private static String classPathFor(Class<?> clazz) {
-    return clazz.getProtectionDomain().getCodeSource().getLocation().getFile();
+    URL url = clazz.getProtectionDomain().getCodeSource().getLocation();
+
+    try {
+      URI uri = url.toURI();
+
+      return Paths.get(uri).toFile().getAbsolutePath();
+    } catch (URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected File writeSourceFile(SourceFile sourceFile) throws IOException {
