@@ -49,7 +49,7 @@ import javax.tools.Diagnostic.Kind;
  *
  */
 @SupportedAnnotationTypes({"javax.persistence.Entity", "javax.persistence.OneToMany"})
-@SupportedSourceVersion(SourceVersion.RELEASE_6)
+@SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class JpaProcessor extends AbstractProcessor {
 
   // various types we'll want to refer to, initialized in init method
