@@ -8,6 +8,7 @@ import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.tools.Diagnostic.Kind;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
@@ -24,6 +25,11 @@ public class JpaProcessorTest {
     mockMessager = Mockito.mock(Messager.class);
     processor = new ProcessorWrapper(new JpaProcessor(), mockMessager);
     compiler = new Compiler();
+  }
+
+  @After
+  public void teardown() {
+    compiler.cleanUp();
   }
 
   @Test
